@@ -3,7 +3,7 @@ import subprocess
 from abc import abstractmethod
 from denite.source.base import Base  # pylint: disable=locally-disabled, import-error
 import denite.util  # pylint: disable=locally-disabled, import-error
-
+import pathlib
 
 class GtagsBase(Base):
     def gather_candidates(self, context):
@@ -35,8 +35,16 @@ class GtagsBase(Base):
         return context['input']
 
     def _create_global_env(self):
+        current_path = pathlib.Path(self.vim.call('getcwd'))
+        gtags_root = None
+        for i in range(len(current_path.resolve().parents)):
+            tmp = current_path.resolve().parents[i].joinpath('GTAGS')
+            if tmp.exists():
+                gtags_root = str(tmp)
+                break
         buffer_vars = self.vim.current.buffer.vars
-        gtags_root = buffer_vars.get('denite_gtags_root', None)
+        if gtags_root:
+            gtags_root = buffer_vars.get('denite_gtags_root', None)
         gtags_db_path = buffer_vars.get('denite_gtags_db_path', None)
         global_env = os.environ.copy()
         if gtags_root:
